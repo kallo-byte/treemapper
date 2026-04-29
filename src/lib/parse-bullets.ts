@@ -23,7 +23,7 @@ export function parseBullets(text: string): { swimlanes: ParsedSwimlane[]; subla
 
   for (const line of lines) {
     const trimmed = line.trim();
-    if (!trimmed) continue;
+    if (!trimmed || trimmed.startsWith('#')) continue;
 
     if (trimmed.startsWith('- ')) {
       const name = trimmed.slice(2).trim();

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { MoreHorizontal, RotateCcw } from 'lucide-react';
 import { COLOR_FAMILIES, DEFAULT_SHADE_INDEX } from '@/lib/color-families';
 import { Swimlane, TimelineBar } from '@/lib/types';
@@ -127,6 +127,152 @@ function computeLayout(items: { id: string; pts: number }[], rect: Rect): Layout
   return out;
 }
 
+// ── Tile Component ──────────────────────────────────────────────────────────
+
+interface TileProps {
+  tile: LayoutTile;
+  bar: TimelineBar;
+  size: TShirtSize | undefined;
+  sizes: Record<string, string>;
+  cellColor: string;
+  family: (typeof COLOR_FAMILIES)[0];
+  showFullLabel: boolean;
+  showSizeOnly: boolean;
+  showMenu: boolean;
+  sublaneShadeIndices: Record<string, number>;
+  onSizeChange: (barId: string, size: TShirtSize | null) => void;
+  onSublaneShadeChange: (sublaneId: string, shadeIndex: number) => void;
+}
+
+function TileCell({
+  tile,
+  bar,
+  size,
+  cellColor,
+  family,
+  showFullLabel,
+  showSizeOnly,
+  showMenu,
+  sublaneShadeIndices,
+  onSizeChange,
+  onSublaneShadeChange,
+}: TileProps) {
+  const isUnset = !size;
+  const shadeIdx = sublaneShadeIndices[bar.id] ?? DEFAULT_SHADE_INDEX;
+  const labelRef = useRef<HTMLSpanElement>(null);
+
+  const handleMouseEnter = useCallback(() => {
+    if (isUnset && labelRef.current) {
+      labelRef.current.style.backgroundColor = cellColor;
+    }
+  }, [isUnset, cellColor]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (labelRef.current) {
+      labelRef.current.style.backgroundColor = 'transparent';
+    }
+  }, []);
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onSizeChange(bar.id, cycleSize(size))}
+      onKeyDown={e => {
+        if (e.key === 'Enter' || e.key === ' ') onSizeChange(bar.id, cycleSize(size));
+      }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      title={`${bar.name} · ${size ?? 'unset'} — click to change`}
+      className="group absolute hover:brightness-90 active:brightness-75 transition-[left,top,width,height] duration-300 ease-in-out focus:outline-none cursor-pointer"
+      style={{
+        left: tile.x,
+        top: tile.y,
+        width: tile.w,
+        height: tile.h,
+        backgroundColor: isUnset ? `${cellColor}28` : cellColor,
+        border: `1px solid rgba(255,255,255,0.25)`,
+      }}
+    >
+      {showFullLabel && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5 px-1 overflow-hidden pointer-events-none">
+          <span
+            ref={labelRef}
+            className="text-[10px] leading-tight text-white/90 font-medium text-center line-clamp-2 w-full rounded-sm px-1 py-0.5 transition-colors duration-200"
+          >
+            {bar.name}
+          </span>
+          <span
+            className={`text-sm font-bold leading-none ${isUnset ? 'text-white/30' : 'text-white'}`}
+          >
+            {size ?? '?'}
+          </span>
+        </div>
+      )}
+      {showSizeOnly && !showFullLabel && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <span className={`text-xs font-bold ${isUnset ? 'text-white/30' : 'text-white'}`}>
+            {size ?? '?'}
+          </span>
+        </div>
+      )}
+
+      {/* Sublane ··· menu */}
+      {showMenu && (
+        <div className="absolute top-1 right-1 z-20" onClick={e => e.stopPropagation()}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center justify-center w-5 h-5 rounded opacity-0 hover:opacity-100 group-hover:opacity-100 focus:opacity-100 bg-black/20 hover:bg-black/40 text-white transition-opacity">
+                <MoreHorizontal className="size-3" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Size</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  {SIZE_SEQUENCE.filter((s): s is TShirtSize => s !== null).map(s => (
+                    <DropdownMenuItem
+                      key={s}
+                      onClick={() => onSizeChange(bar.id, s)}
+                      className={size === s ? 'font-semibold' : ''}
+                    >
+                      {s}
+                      {size === s ? ' ✓' : ''}
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => onSizeChange(bar.id, null)}>
+                    Unset{!size ? ' ✓' : ''}
+                  </DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Shade</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  {family.bars.map((hex, idx) => (
+                    <DropdownMenuItem
+                      key={idx}
+                      onClick={() => onSublaneShadeChange(bar.id, idx)}
+                      className={shadeIdx === idx ? 'font-semibold' : ''}
+                    >
+                      <span
+                        className="w-3 h-3 rounded-sm flex-shrink-0"
+                        style={{ backgroundColor: hex }}
+                      />
+                      {family.barNames[idx]}
+                      {shadeIdx === idx ? ' ✓' : ''}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 interface SizingViewProps {
@@ -226,114 +372,27 @@ export default function SizingView({
                   {subTiles.map(tile => {
                     const bar = slBars.find(b => b.id === tile.id)!;
                     const size = sizes[bar.id] as TShirtSize | undefined;
-                    const isUnset = !size;
                     const showFullLabel = tile.w >= 72 && tile.h >= 44;
                     const showSizeOnly = !showFullLabel && (tile.w >= 36 || tile.h >= 36);
                     const showMenu = tile.w >= 28 && tile.h >= 28;
-                    const shadeIdx = sublaneShadeIndices[bar.id] ?? DEFAULT_SHADE_INDEX;
                     const cellColor = bar.color;
 
                     return (
-                      <div
+                      <TileCell
                         key={tile.id}
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => onSizeChange(bar.id, cycleSize(size))}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter' || e.key === ' ')
-                            onSizeChange(bar.id, cycleSize(size));
-                        }}
-                        title={`${bar.name} · ${size ?? 'unset'} — click to change`}
-                        className="group absolute hover:brightness-90 active:brightness-75 transition-[left,top,width,height] duration-300 ease-in-out focus:outline-none cursor-pointer"
-                        style={{
-                          left: tile.x,
-                          top: tile.y,
-                          width: tile.w,
-                          height: tile.h,
-                          backgroundColor: isUnset ? `${cellColor}28` : cellColor,
-                          border: `1px solid rgba(255,255,255,0.25)`,
-                        }}
-                      >
-                        {showFullLabel && (
-                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5 px-1 overflow-hidden pointer-events-none">
-                            <span className="text-[10px] leading-tight text-white/90 font-medium text-center line-clamp-2 w-full">
-                              {bar.name}
-                            </span>
-                            <span
-                              className={`text-sm font-bold leading-none ${isUnset ? 'text-white/30' : 'text-white'}`}
-                            >
-                              {size ?? '?'}
-                            </span>
-                          </div>
-                        )}
-                        {showSizeOnly && !showFullLabel && (
-                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <span
-                              className={`text-xs font-bold ${isUnset ? 'text-white/30' : 'text-white'}`}
-                            >
-                              {size ?? '?'}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Sublane ··· menu */}
-                        {showMenu && (
-                          <div
-                            className="absolute top-1 right-1 z-20"
-                            onClick={e => e.stopPropagation()}
-                          >
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <button className="flex items-center justify-center w-5 h-5 rounded opacity-0 hover:opacity-100 group-hover:opacity-100 focus:opacity-100 bg-black/20 hover:bg-black/40 text-white transition-opacity">
-                                  <MoreHorizontal className="size-3" />
-                                </button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuSub>
-                                  <DropdownMenuSubTrigger>Size</DropdownMenuSubTrigger>
-                                  <DropdownMenuSubContent>
-                                    {SIZE_SEQUENCE.filter((s): s is TShirtSize => s !== null).map(
-                                      s => (
-                                        <DropdownMenuItem
-                                          key={s}
-                                          onClick={() => onSizeChange(bar.id, s)}
-                                          className={size === s ? 'font-semibold' : ''}
-                                        >
-                                          {s}
-                                          {size === s ? ' ✓' : ''}
-                                        </DropdownMenuItem>
-                                      ),
-                                    )}
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => onSizeChange(bar.id, null)}>
-                                      Unset{!size ? ' ✓' : ''}
-                                    </DropdownMenuItem>
-                                  </DropdownMenuSubContent>
-                                </DropdownMenuSub>
-                                <DropdownMenuSub>
-                                  <DropdownMenuSubTrigger>Shade</DropdownMenuSubTrigger>
-                                  <DropdownMenuSubContent>
-                                    {family.bars.map((hex, idx) => (
-                                      <DropdownMenuItem
-                                        key={idx}
-                                        onClick={() => onSublaneShadeChange(bar.id, idx)}
-                                        className={shadeIdx === idx ? 'font-semibold' : ''}
-                                      >
-                                        <span
-                                          className="w-3 h-3 rounded-sm flex-shrink-0"
-                                          style={{ backgroundColor: hex }}
-                                        />
-                                        {family.barNames[idx]}
-                                        {shadeIdx === idx ? ' ✓' : ''}
-                                      </DropdownMenuItem>
-                                    ))}
-                                  </DropdownMenuSubContent>
-                                </DropdownMenuSub>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        )}
-                      </div>
+                        tile={tile}
+                        bar={bar}
+                        size={size}
+                        sizes={sizes}
+                        cellColor={cellColor}
+                        family={family}
+                        showFullLabel={showFullLabel}
+                        showSizeOnly={showSizeOnly}
+                        showMenu={showMenu}
+                        sublaneShadeIndices={sublaneShadeIndices}
+                        onSizeChange={onSizeChange}
+                        onSublaneShadeChange={onSublaneShadeChange}
+                      />
                     );
                   })}
 

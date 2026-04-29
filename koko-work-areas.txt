@@ -1,0 +1,17 @@
+SSI Platform 
+- Configuring new partners or content in the Admin tool 
+- QA of engineering and content changes 
+- Planning for onboarding new partners/content (e.g. Koko MHFA, new Project YES Partners)
+
+Koko Metabase Data 
+- Setting up SSI Platform Metrics 
+- QA of metric queries and underlying data integrity 
+- Setting up Dashboards for Koko or Partners 
+- Roadmap & Future-Facing Work (e.g. Defining Impact Metrics for Longevity)
+
+Ethics Process 
+# Clarify ROB for Koko to ensure all product, research or other work that could have any direct or indirect impact on end-users is reviewed under our Compass Ethics guidelines. 
+
+Project Management 
+- Roadmap planning and coordination of engineering work 
+
