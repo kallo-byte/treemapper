@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { MoreHorizontal, RotateCcw } from 'lucide-react';
-import { COLOR_FAMILIES, DEFAULT_SHADE_INDEX } from '@/lib/color-families';
-import { Swimlane, TimelineBar } from '@/lib/types';
-import { Button } from '@/components/ui/button';
+import { COLOR_FAMILIES, DEFAULT_SHADE_INDEX } from './color-families';
+import type { Swimlane, TimelineBar, TShirtSize } from './types';
+import { SIZE_SEQUENCE, SIZE_POINTS } from './types';
+import { Button } from './ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+} from './ui/alert-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,14 +24,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-
-export type TShirtSize = 'XXS' | 'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL';
-
-// Cycle order: unset → S → M → L → XL → XXL → XS → XXS → unset
-const SIZE_SEQUENCE: (TShirtSize | null)[] = [null, 'S', 'M', 'L', 'XL', 'XXL', 'XS', 'XXS'];
-
-const SIZE_POINTS: Record<TShirtSize, number> = { XXS: 0.5, XS: 1, S: 2, M: 4, L: 8, XL: 16, XXL: 32 };
+} from './ui/dropdown-menu';
 
 const UNSET_PTS = 0.25;
 
@@ -133,15 +127,17 @@ interface TileProps {
   tile: LayoutTile;
   bar: TimelineBar;
   size: TShirtSize | undefined;
-  sizes: Record<string, string>;
   cellColor: string;
   family: (typeof COLOR_FAMILIES)[0];
+  displayName: string;
   showFullLabel: boolean;
   showSizeOnly: boolean;
   showMenu: boolean;
+  isSelected: boolean;
   sublaneShadeIndices: Record<string, number>;
   onSizeChange: (barId: string, size: TShirtSize | null) => void;
   onSublaneShadeChange: (sublaneId: string, shadeIndex: number) => void;
+  onOpenPanel?: (view: { type: 'swimlane' | 'sublane'; id: string }) => void;
 }
 
 function TileCell({
@@ -150,12 +146,15 @@ function TileCell({
   size,
   cellColor,
   family,
+  displayName,
   showFullLabel,
   showSizeOnly,
   showMenu,
+  isSelected,
   sublaneShadeIndices,
   onSizeChange,
   onSublaneShadeChange,
+  onOpenPanel,
 }: TileProps) {
   const isUnset = !size;
   const shadeIdx = sublaneShadeIndices[bar.id] ?? DEFAULT_SHADE_INDEX;
@@ -183,7 +182,7 @@ function TileCell({
       }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      title={`${bar.name} · ${size ?? 'unset'} — click to change`}
+      title={`${displayName} · ${size ?? 'unset'} — click to change`}
       className="group absolute hover:brightness-90 active:brightness-75 transition-[left,top,width,height] duration-300 ease-in-out focus:outline-none cursor-pointer"
       style={{
         left: tile.x,
@@ -192,6 +191,9 @@ function TileCell({
         height: tile.h,
         backgroundColor: isUnset ? `${cellColor}28` : cellColor,
         border: `1px solid rgba(255,255,255,0.25)`,
+        boxShadow: isSelected
+          ? 'inset 0 0 0 2px white, inset 0 0 0 4px rgba(255,255,255,0.4)'
+          : undefined,
       }}
     >
       {showFullLabel && (
@@ -200,7 +202,7 @@ function TileCell({
             ref={labelRef}
             className="text-[10px] leading-tight text-white/90 font-medium text-center line-clamp-2 w-full rounded-sm px-1 py-0.5 transition-colors duration-200"
           >
-            {bar.name}
+            {displayName}
           </span>
           <span
             className={`text-sm font-bold leading-none ${isUnset ? 'text-white/30' : 'text-white'}`}
@@ -217,7 +219,6 @@ function TileCell({
         </div>
       )}
 
-      {/* Sublane ··· menu */}
       {showMenu && (
         <div className="absolute top-1 right-1 z-20" onClick={e => e.stopPropagation()}>
           <DropdownMenu>
@@ -227,6 +228,14 @@ function TileCell({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
+              {onOpenPanel && (
+                <>
+                  <DropdownMenuItem onClick={() => onOpenPanel({ type: 'sublane', id: bar.id })}>
+                    See details
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>Size</DropdownMenuSubTrigger>
                 <DropdownMenuSubContent>
@@ -280,14 +289,18 @@ interface SizingViewProps {
   bars: TimelineBar[];
   sizes: Record<string, string>;
   onSizeChange: (barId: string, size: TShirtSize | null) => void;
-  onResetSizes: () => void;
   swimlaneFamilyIndices: Record<string, number>;
   sublaneShadeIndices: Record<string, number>;
   onSwimlaneColorChange: (swimlaneId: string, familyIndex: number) => void;
   onSublaneShadeChange: (sublaneId: string, shadeIndex: number) => void;
+  onResetSizes?: () => void;
+  onOpenPanel?: (view: { type: 'swimlane' | 'sublane'; id: string }) => void;
+  selectedSwimlaneId?: string;
+  selectedBarId?: string;
+  nameOverrides?: { sublanes: Record<string, string> };
 }
 
-export default function SizingView({
+export function SizingView({
   swimlanes,
   bars,
   sizes,
@@ -297,6 +310,10 @@ export default function SizingView({
   sublaneShadeIndices,
   onSwimlaneColorChange,
   onSublaneShadeChange,
+  onOpenPanel,
+  selectedSwimlaneId,
+  selectedBarId,
+  nameOverrides,
 }: SizingViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dims, setDims] = useState({ w: 0, h: 0 });
@@ -335,47 +352,48 @@ export default function SizingView({
   return (
     <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
       <div className="relative flex-1 min-h-0 bg-gray-50 p-3">
-        {/* Reset button */}
-        <div className="absolute top-3 right-3 z-20">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline" size="sm" className="h-7 px-2 text-xs gap-1.5">
-                <RotateCcw className="size-3" />
-                Reset
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Reset size chart?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  All T-shirt sizes will be cleared. Every swimlane and sub-lane will return to
-                  equal, unset sizing.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={onResetSizes}>Reset</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
+        {onResetSizes && (
+          <div className="absolute top-3 right-3 z-20">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" className="h-7 px-2 text-xs gap-1.5">
+                  <RotateCcw className="size-3" />
+                  Reset
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Reset size chart?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    All T-shirt sizes will be cleared. Every swimlane and sub-lane will return to
+                    equal, unset sizing.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={onResetSizes}>Reset</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        )}
 
         <div ref={containerRef} className="relative w-full h-full">
           {dims.w > 0 &&
             groups.map(({ swimlane, slTile, subTiles, bars: slBars }) => {
               const familyIdx = swimlaneFamilyIndices[swimlane.id] ?? 0;
               const family = COLOR_FAMILIES[familyIdx];
+              const isSwimlaneSel = selectedSwimlaneId === swimlane.id;
 
               return (
                 <div key={swimlane.id}>
-                  {/* Sub-lane cells */}
                   {subTiles.map(tile => {
                     const bar = slBars.find(b => b.id === tile.id)!;
                     const size = sizes[bar.id] as TShirtSize | undefined;
                     const showFullLabel = tile.w >= 72 && tile.h >= 44;
                     const showSizeOnly = !showFullLabel && (tile.w >= 36 || tile.h >= 36);
                     const showMenu = tile.w >= 28 && tile.h >= 28;
-                    const cellColor = bar.color;
+                    const displayName = nameOverrides?.sublanes[bar.id] ?? bar.name;
 
                     return (
                       <TileCell
@@ -383,20 +401,21 @@ export default function SizingView({
                         tile={tile}
                         bar={bar}
                         size={size}
-                        sizes={sizes}
-                        cellColor={cellColor}
+                        cellColor={bar.color}
                         family={family}
+                        displayName={displayName}
                         showFullLabel={showFullLabel}
                         showSizeOnly={showSizeOnly}
                         showMenu={showMenu}
+                        isSelected={selectedBarId === bar.id}
                         sublaneShadeIndices={sublaneShadeIndices}
                         onSizeChange={onSizeChange}
                         onSublaneShadeChange={onSublaneShadeChange}
+                        onOpenPanel={onOpenPanel}
                       />
                     );
                   })}
 
-                  {/* Swimlane group border */}
                   <div
                     className="absolute pointer-events-none"
                     style={{
@@ -404,22 +423,34 @@ export default function SizingView({
                       top: slTile.y,
                       width: slTile.w,
                       height: slTile.h,
-                      boxShadow: 'inset 0 0 0 3px white',
+                      boxShadow: isSwimlaneSel
+                        ? 'inset 0 0 0 3px white, inset 0 0 0 6px rgba(255,255,255,0.35)'
+                        : 'inset 0 0 0 3px white',
                       zIndex: 10,
                     }}
                   />
 
-                  {/* Swimlane label + ··· menu */}
                   <div
                     className="absolute flex items-center gap-1"
                     style={{ left: slTile.x + 6, top: slTile.y + 6, zIndex: 11 }}
                   >
-                    <span
-                      className="px-1.5 py-0.5 text-[10px] font-bold text-white rounded-sm leading-tight max-w-[120px] truncate"
-                      style={{ backgroundColor: swimlane.color }}
-                    >
-                      {swimlane.name}
-                    </span>
+                    {onOpenPanel ? (
+                      <button
+                        className="px-1.5 py-0.5 text-[10px] font-bold text-white rounded-sm leading-tight max-w-[120px] truncate hover:brightness-110 transition-[filter]"
+                        style={{ backgroundColor: swimlane.color }}
+                        title={swimlane.name}
+                        onClick={() => onOpenPanel({ type: 'swimlane', id: swimlane.id })}
+                      >
+                        {swimlane.name}
+                      </button>
+                    ) : (
+                      <span
+                        className="px-1.5 py-0.5 text-[10px] font-bold text-white rounded-sm leading-tight max-w-[120px] truncate"
+                        style={{ backgroundColor: swimlane.color }}
+                      >
+                        {swimlane.name}
+                      </span>
+                    )}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button className="flex items-center justify-center w-5 h-5 rounded bg-black/20 hover:bg-black/40 text-white opacity-0 hover:opacity-100 focus:opacity-100 transition-opacity">

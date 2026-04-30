@@ -1,11 +1,11 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Database } from 'lucide-react';
-import { COLOR_FAMILIES, DEFAULT_FAMILY_INDEX, DEFAULT_SHADE_INDEX } from '@/lib/color-families';
-import { parseBullets } from '@/lib/parse-bullets';
-import { useLocalStorage } from '@/lib/storage';
-import { Swimlane, TimelineBar } from '@/lib/types';
-import SizingView, { TShirtSize } from '@/components/SizingView';
-import DataModal from '@/components/DataModal';
+import { COLOR_FAMILIES, DEFAULT_FAMILY_INDEX, DEFAULT_SHADE_INDEX } from '../core/color-families';
+import { parseBullets } from './lib/parse-bullets';
+import { useLocalStorage } from './lib/storage';
+import type { Swimlane, TimelineBar, TShirtSize } from '../core/types';
+import { SizingView } from '../core/SizingView';
+import DataModal from './components/DataModal';
 import { Button } from '@/components/ui/button';
 
 export default function App() {
@@ -41,7 +41,6 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parsedSwimlanes]);
 
-  // Compute effective family index per swimlane (auto-assigned or user-chosen)
   const swimlaneFamilyIndices = useMemo(() => {
     const result: Record<string, number> = {};
     parsedSwimlanes.forEach((sl, i) => {
@@ -50,7 +49,6 @@ export default function App() {
     return result;
   }, [parsedSwimlanes, swimlaneColors]);
 
-  // Build the swimlane + bar objects that SizingView expects
   const sizingViewSwimlanes: Swimlane[] = parsedSwimlanes.map(sl => ({
     id: sl.id,
     name: sl.name,
@@ -89,7 +87,6 @@ export default function App() {
 
   return (
     <div className="antialiased h-screen flex flex-col font-sans">
-      {/* Header */}
       <nav className="flex items-center gap-4 px-5 py-3 border-b border-gray-200 bg-white flex-shrink-0">
         <span className="font-semibold text-gray-900 text-base tracking-tight leading-none">
           Treemapper
@@ -110,7 +107,6 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Main */}
       <main className="flex-1 overflow-hidden min-h-0 flex flex-col">
         {isEmpty ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-4">

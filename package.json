@@ -1,12 +1,22 @@
 {
-  "name": "treemapper",
+  "name": "treemapper-core",
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": {
+      "import": "./src/core/index.ts"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:lib": "vite build --mode lib",
     "preview": "vite preview"
+  },
+  "peerDependencies": {
+    "react": ">=19",
+    "react-dom": ">=19"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.6",
