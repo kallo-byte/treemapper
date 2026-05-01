@@ -314,6 +314,7 @@ export function SizingView({
   selectedSwimlaneId,
   selectedBarId,
   nameOverrides,
+  visibleSwimlaneIds,
 }: SizingViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dims, setDims] = useState({ w: 0, h: 0 });
@@ -349,12 +350,34 @@ export function SizingView({
     return { swimlane: sl, slTile, subTiles, bars: slBars };
   });
 
+  const visibleGroups = visibleSwimlaneIds
+    ? groups.filter(g => visibleSwimlaneIds.has(g.swimlane.id))
+    : groups;
+
+  let translateX = 0;
+  let translateY = 0;
+  if (visibleSwimlaneIds && visibleGroups.length > 0 && dims.w > 0) {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const { slTile } of visibleGroups) {
+      minX = Math.min(minX, slTile.x);
+      minY = Math.min(minY, slTile.y);
+      maxX = Math.max(maxX, slTile.x + slTile.w);
+      maxY = Math.max(maxY, slTile.y + slTile.h);
+    }
+    translateX = (dims.w - (maxX - minX)) / 2 - minX;
+    translateY = (dims.h - (maxY - minY)) / 2 - minY;
+  }
+
   return (
     <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
       <div className="relative flex-1 min-h-0 bg-gray-50 p-3">
         <div ref={containerRef} className="relative w-full h-full">
-          {dims.w > 0 &&
-            groups.map(({ swimlane, slTile, subTiles, bars: slBars }) => {
+          {dims.w > 0 && (
+          <div
+            className="absolute inset-0"
+            style={{ transform: `translate(${translateX}px, ${translateY}px)` }}
+          >
+            {visibleGroups.map(({ swimlane, slTile, subTiles, bars: slBars }) => {
               const familyIdx = swimlaneFamilyIndices[swimlane.id] ?? 0;
               const family = COLOR_FAMILIES[familyIdx];
               const isSwimlaneSel = selectedSwimlaneId === swimlane.id;
@@ -477,6 +500,8 @@ export function SizingView({
                 </div>
               );
             })}
+          </div>
+          )}
         </div>
       </div>
 

@@ -87,12 +87,6 @@ export default function App() {
 
   const hasSwimlaneFilter = selectedSwimlaneIds.length > 0;
   const selectedSwimlaneIdSet = new Set(selectedSwimlaneIds);
-  const filteredSwimlanes = hasSwimlaneFilter
-    ? sizingViewSwimlanes.filter(sl => selectedSwimlaneIdSet.has(sl.id))
-    : sizingViewSwimlanes;
-  const filteredBars = hasSwimlaneFilter
-    ? sizingViewBars.filter(b => selectedSwimlaneIdSet.has(b.swimlaneId))
-    : sizingViewBars;
 
   function handleSizeChange(barId: string, size: TShirtSize | null) {
     setSizes(prev => {
@@ -184,8 +178,8 @@ export default function App() {
           </div>
         ) : (
           <SizingView
-            swimlanes={filteredSwimlanes}
-            bars={filteredBars}
+            swimlanes={sizingViewSwimlanes}
+            bars={sizingViewBars}
             sizes={sizes}
             onSizeChange={handleSizeChange}
             onResetSizes={() => setSizes({})}
@@ -193,6 +187,7 @@ export default function App() {
             sublaneShadeIndices={sublaneShades}
             onSwimlaneColorChange={handleSwimlaneColorChange}
             onSublaneShadeChange={handleSublaneShadeChange}
+            visibleSwimlaneIds={hasSwimlaneFilter ? selectedSwimlaneIdSet : undefined}
           />
         )}
       </main>
