@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { Database } from 'lucide-react';
+import { Database, RotateCcw } from 'lucide-react';
 import { COLOR_FAMILIES, DEFAULT_FAMILY_INDEX, DEFAULT_SHADE_INDEX } from '../core/color-families';
 import { parseBullets } from './lib/parse-bullets';
 import { useLocalStorage } from './lib/storage';
@@ -8,6 +8,17 @@ import { SizingView } from '../core/SizingView';
 import { SwimlaneFilter } from '../core/SwimlaneFilter';
 import DataModal from './components/DataModal';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 export default function App() {
   const [rawText, setRawText] = useLocalStorage<string>('treemapper:text', '');
@@ -118,7 +129,30 @@ export default function App() {
             onChange={setSelectedSwimlaneIds}
           />
         )}
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          {!isEmpty && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5">
+                  <RotateCcw className="size-3.5" />
+                  Reset
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Reset size chart?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    All T-shirt sizes will be cleared. Every swimlane and sub-lane will return to
+                    equal, unset sizing.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => setSizes({})}>Reset</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
           <Button
             variant="outline"
             size="sm"

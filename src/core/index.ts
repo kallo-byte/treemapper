@@ -1,3 +1,15 @@
+/*
+ * Consumer setup (do both in your app):
+ *
+ * 1. Import styles — skip if you already define the same CSS variables:
+ *      import 'treemapper-core/styles.css'
+ *
+ * 2. Tell Tailwind to scan treemapper-core source so utility classes aren't purged.
+ *    Tailwind v4 — add to your globals.css:
+ *      @source "../node_modules/treemapper-core/src/core";
+ *    Tailwind v3 — add to tailwind.config.js content array:
+ *      "./node_modules/treemapper-core/src/core/**\/*.{ts,tsx}"
+ */
 export { SizingView } from './SizingView';
 export { SwimlaneFilter } from './SwimlaneFilter';
 export type {

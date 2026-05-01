@@ -1,20 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { MoreHorizontal, RotateCcw } from 'lucide-react';
+import { MoreHorizontal } from 'lucide-react';
 import { COLOR_FAMILIES, DEFAULT_SHADE_INDEX } from './color-families';
 import type { Swimlane, TimelineBar, TShirtSize } from './types';
 import { SIZE_SEQUENCE, SIZE_POINTS } from './types';
-import { Button } from './ui/button';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from './ui/alert-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -204,18 +192,22 @@ function TileCell({
           >
             {displayName}
           </span>
-          <span
-            className={`text-sm font-bold leading-none ${isUnset ? 'text-white/30' : 'text-white'}`}
-          >
-            {size ?? '?'}
-          </span>
+          {isUnset ? (
+            <span className="text-[9px] font-medium leading-tight text-white/40 text-center">
+              Click to size
+            </span>
+          ) : (
+            <span className="text-sm font-bold leading-none text-white">
+              {size}
+            </span>
+          )}
         </div>
       )}
       {showSizeOnly && !showFullLabel && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className={`text-xs font-bold ${isUnset ? 'text-white/30' : 'text-white'}`}>
-            {size ?? '?'}
-          </span>
+          {!isUnset && (
+            <span className="text-xs font-bold text-white">{size}</span>
+          )}
         </div>
       )}
 
@@ -305,7 +297,7 @@ export function SizingView({
   bars,
   sizes,
   onSizeChange,
-  onResetSizes,
+  // onResetSizes is accepted for API compatibility but UI is consumer's responsibility
   swimlaneFamilyIndices,
   sublaneShadeIndices,
   onSwimlaneColorChange,
@@ -352,32 +344,6 @@ export function SizingView({
   return (
     <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
       <div className="relative flex-1 min-h-0 bg-gray-50 p-3">
-        {onResetSizes && (
-          <div className="absolute top-3 right-3 z-20">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" size="sm" className="h-7 px-2 text-xs gap-1.5">
-                  <RotateCcw className="size-3" />
-                  Reset
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Reset size chart?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    All T-shirt sizes will be cleared. Every swimlane and sub-lane will return to
-                    equal, unset sizing.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={onResetSizes}>Reset</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        )}
-
         <div ref={containerRef} className="relative w-full h-full">
           {dims.w > 0 &&
             groups.map(({ swimlane, slTile, subTiles, bars: slBars }) => {

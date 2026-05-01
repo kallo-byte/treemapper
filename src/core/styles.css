@@ -1,0 +1,44 @@
+/*
+ * treemapper-core base styles
+ *
+ * Import this once in your app entry if you don't already define these
+ * CSS custom properties. If your app already defines them (e.g. via a
+ * shadcn/ui globals.css), you can skip this import.
+ *
+ * Also add this to your Tailwind config so utility classes used inside
+ * treemapper-core components are included in your CSS output:
+ *
+ *   In your globals.css (Tailwind v4):
+ *     @source "../node_modules/treemapper-core/src/core";
+ *
+ *   In tailwind.config.js (Tailwind v3):
+ *     content: ["./node_modules/treemapper-core/src/core/**\/*.{ts,tsx}"]
+ */
+
+:root {
+  --font-size: 16px;
+  --background: #ffffff;
+  --foreground: oklch(0.145 0 0);
+  --card: #ffffff;
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: #030213;
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.95 0.0058 264.53);
+  --secondary-foreground: #030213;
+  --muted: #ececf0;
+  --muted-foreground: #717182;
+  --accent: #e9ebef;
+  --accent-foreground: #030213;
+  --destructive: #d4183d;
+  --destructive-foreground: #ffffff;
+  --border: rgba(0, 0, 0, 0.1);
+  --input: transparent;
+  --input-background: #f3f3f5;
+  --switch-background: #cbced4;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --ring: oklch(0.708 0 0);
+  --radius: 0.625rem;
+}

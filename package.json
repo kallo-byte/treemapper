@@ -6,7 +6,8 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
-    }
+    },
+    "./styles.css": "./dist/styles.css"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -16,7 +17,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "build:lib": "rm -rf dist && vite build --mode lib && tsc -p tsconfig.lib.json",
+    "build:lib": "rm -rf dist && vite build --mode lib && tsc -p tsconfig.lib.json && cp src/core/styles.css dist/styles.css",
     "preview": "vite preview"
   },
   "peerDependencies": {
