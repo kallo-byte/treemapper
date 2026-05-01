@@ -191,19 +191,19 @@ function TileCell({
               ref={labelRef}
               className="flex flex-col items-center gap-0.5 rounded-sm px-1 py-1 transition-colors duration-200"
             >
-              <span className="text-[10px] leading-tight text-white/90 font-medium text-center line-clamp-2 w-full">
+              <span className="text-[12px] leading-tight text-white/90 font-medium text-center line-clamp-2 w-full">
                 {displayName}
               </span>
-              <span className="text-[9px] font-medium leading-tight text-white/50 text-center">
+              <span className="text-[11px] font-medium leading-tight text-white/50 text-center">
                 Click to change size
               </span>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-0.5">
-              <span className="text-[10px] leading-tight text-white/90 font-medium text-center line-clamp-2 w-full px-1">
+              <span className="text-[12px] leading-tight text-white/90 font-medium text-center line-clamp-2 w-full px-1">
                 {displayName}
               </span>
-              <span className="text-sm font-bold leading-none text-white">
+              <span className="text-base font-bold leading-none text-white">
                 {size}
               </span>
             </div>
@@ -213,7 +213,7 @@ function TileCell({
       {showSizeOnly && !showFullLabel && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           {!isUnset && (
-            <span className="text-xs font-bold text-white">{size}</span>
+            <span className="text-sm font-bold text-white">{size}</span>
           )}
         </div>
       )}
@@ -222,8 +222,8 @@ function TileCell({
         <div className="absolute top-1 right-1 z-20" onClick={e => e.stopPropagation()}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center justify-center w-5 h-5 rounded opacity-0 hover:opacity-100 group-hover:opacity-100 focus:opacity-100 bg-black/20 hover:bg-black/40 text-white transition-opacity">
-                <MoreHorizontal className="size-3" />
+              <button className="flex items-center justify-center w-6 h-6 rounded opacity-0 hover:opacity-100 group-hover:opacity-100 focus:opacity-100 bg-black/20 hover:bg-black/40 text-white transition-opacity">
+                <MoreHorizontal className="size-4" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
@@ -409,7 +409,7 @@ export function SizingView({
                   >
                     {onOpenPanel ? (
                       <button
-                        className="px-1.5 py-0.5 text-[10px] font-bold text-white rounded-sm leading-tight max-w-[120px] truncate hover:brightness-110 transition-[filter]"
+                        className="px-1.5 py-0.5 text-[12px] font-bold text-white rounded-sm leading-tight max-w-[120px] truncate hover:brightness-110 transition-[filter]"
                         style={{ backgroundColor: swimlane.color }}
                         title={swimlane.name}
                         onClick={() => onOpenPanel({ type: 'swimlane', id: swimlane.id })}
@@ -418,7 +418,7 @@ export function SizingView({
                       </button>
                     ) : (
                       <span
-                        className="px-1.5 py-0.5 text-[10px] font-bold text-white rounded-sm leading-tight max-w-[120px] truncate"
+                        className="px-1.5 py-0.5 text-[12px] font-bold text-white rounded-sm leading-tight max-w-[120px] truncate"
                         style={{ backgroundColor: swimlane.color }}
                       >
                         {swimlane.name}
@@ -426,8 +426,8 @@ export function SizingView({
                     )}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <button className="flex items-center justify-center w-5 h-5 rounded bg-black/20 hover:bg-black/40 text-white opacity-0 hover:opacity-100 focus:opacity-100 transition-opacity">
-                          <MoreHorizontal className="size-3" />
+                        <button className="flex items-center justify-center w-6 h-6 rounded bg-black/20 hover:bg-black/40 text-white opacity-0 hover:opacity-100 focus:opacity-100 transition-opacity">
+                          <MoreHorizontal className="size-4" />
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" className="w-48">
