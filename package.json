@@ -4,15 +4,13 @@
   "type": "module",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "import": "./src/core/index.ts"
     },
-    "./styles.css": "./dist/styles.css"
+    "./styles.css": "./src/core/styles.css"
   },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./src/core/index.ts",
   "files": [
-    "dist"
+    "src/core"
   ],
   "scripts": {
     "dev": "vite",
