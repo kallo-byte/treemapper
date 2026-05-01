@@ -428,12 +428,12 @@ export function SizingView({
                   />
 
                   <div
-                    className="absolute flex items-center gap-1"
-                    style={{ left: slTile.x + 6, top: slTile.y + 6, zIndex: 11 }}
+                    className="absolute flex items-center gap-1 overflow-hidden"
+                    style={{ left: slTile.x + 6, top: slTile.y + 6, zIndex: 11, maxWidth: slTile.w - 12 }}
                   >
                     {onOpenPanel ? (
                       <button
-                        className="px-1.5 py-0.5 text-[12px] font-bold text-white rounded-sm leading-tight max-w-[120px] truncate hover:brightness-110 transition-[filter]"
+                        className="px-1.5 py-0.5 text-[12px] font-bold text-white rounded-sm leading-tight min-w-0 truncate hover:brightness-110 transition-[filter]"
                         style={{ backgroundColor: swimlane.color }}
                         title={swimlane.name}
                         onClick={() => onOpenPanel({ type: 'swimlane', id: swimlane.id })}
@@ -442,7 +442,7 @@ export function SizingView({
                       </button>
                     ) : (
                       <span
-                        className="px-1.5 py-0.5 text-[12px] font-bold text-white rounded-sm leading-tight max-w-[120px] truncate"
+                        className="px-1.5 py-0.5 text-[12px] font-bold text-white rounded-sm leading-tight min-w-0 truncate"
                         style={{ backgroundColor: swimlane.color }}
                       >
                         {swimlane.name}
@@ -450,7 +450,7 @@ export function SizingView({
                     )}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <button className="flex items-center justify-center w-6 h-6 rounded bg-black/20 hover:bg-black/40 text-white opacity-0 hover:opacity-100 focus:opacity-100 transition-opacity">
+                        <button className="flex items-center justify-center w-6 h-6 rounded bg-black/20 hover:bg-black/40 text-white opacity-0 hover:opacity-100 focus:opacity-100 transition-opacity flex-shrink-0">
                           <MoreHorizontal className="size-4" />
                         </button>
                       </DropdownMenuTrigger>
