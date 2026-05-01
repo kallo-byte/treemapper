@@ -5,6 +5,7 @@ import { parseBullets } from './lib/parse-bullets';
 import { useLocalStorage } from './lib/storage';
 import type { Swimlane, TimelineBar, TShirtSize } from '../core/types';
 import { SizingView } from '../core/SizingView';
+import { SwimlaneFilter } from '../core/SwimlaneFilter';
 import DataModal from './components/DataModal';
 import { Button } from '@/components/ui/button';
 
@@ -20,6 +21,7 @@ export default function App() {
     {},
   );
   const [isDataModalOpen, setIsDataModalOpen] = useState(false);
+  const [selectedSwimlaneIds, setSelectedSwimlaneIds] = useState<string[]>([]);
 
   const { swimlanes: parsedSwimlanes, sublanes: parsedSublanes } = useMemo(
     () => parseBullets(rawText),
@@ -66,6 +68,21 @@ export default function App() {
     };
   });
 
+  // Drop any selected IDs that no longer exist in the parsed data
+  useEffect(() => {
+    const available = new Set(parsedSwimlanes.map(sl => sl.id));
+    setSelectedSwimlaneIds(prev => prev.filter(id => available.has(id)));
+  }, [parsedSwimlanes]);
+
+  const hasSwimlaneFilter = selectedSwimlaneIds.length > 0;
+  const selectedSwimlaneIdSet = new Set(selectedSwimlaneIds);
+  const filteredSwimlanes = hasSwimlaneFilter
+    ? sizingViewSwimlanes.filter(sl => selectedSwimlaneIdSet.has(sl.id))
+    : sizingViewSwimlanes;
+  const filteredBars = hasSwimlaneFilter
+    ? sizingViewBars.filter(b => selectedSwimlaneIdSet.has(b.swimlaneId))
+    : sizingViewBars;
+
   function handleSizeChange(barId: string, size: TShirtSize | null) {
     setSizes(prev => {
       const next = { ...prev };
@@ -94,6 +111,13 @@ export default function App() {
         <span className="text-sm text-gray-400 leading-none">
           T-shirt sizing visualizer
         </span>
+        {!isEmpty && parsedSwimlanes.length >= 2 && (
+          <SwimlaneFilter
+            swimlanes={sizingViewSwimlanes}
+            selectedIds={selectedSwimlaneIds}
+            onChange={setSelectedSwimlaneIds}
+          />
+        )}
         <div className="ml-auto">
           <Button
             variant="outline"
@@ -126,8 +150,8 @@ export default function App() {
           </div>
         ) : (
           <SizingView
-            swimlanes={sizingViewSwimlanes}
-            bars={sizingViewBars}
+            swimlanes={filteredSwimlanes}
+            bars={filteredBars}
             sizes={sizes}
             onSizeChange={handleSizeChange}
             onResetSizes={() => setSizes({})}

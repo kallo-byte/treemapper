@@ -55,22 +55,22 @@ Research
 
 ```
 src/
-├── core/                  ← Library exports (consumed by downstream apps)
-│   ├── index.ts           ← Public API
-│   ├── SizingView.tsx     ← The canonical treemap component
-│   ├── types.ts           ← Shared types (Swimlane, TimelineBar, EntityMetadata, TShirtSize)
-│   └── color-families.ts ← Color families + shade system
-└── app/                   ← Standalone app only (not exported)
-    ├── App.tsx            ← Root component, state management, data wiring
-    ├── main.tsx           ← Vite entry point
+├── core/                    ← Library exports (consumed by downstream apps)
+│   ├── index.ts             ← Public API
+│   ├── SizingView.tsx       ← The canonical treemap component
+│   ├── SwimlaneFilter.tsx   ← Controlled swimlane filter dropdown
+│   ├── types.ts             ← Shared types (Swimlane, TimelineBar, EntityMetadata, TShirtSize)
+│   └── color-families.ts   ← Color families + shade system
+└── app/                     ← Standalone app only (not exported)
+    ├── App.tsx              ← Root component, state management, data wiring
+    ├── main.tsx             ← Vite entry point
     ├── components/
-    │   └── DataModal.tsx  ← Bullet-list data entry UI
+    │   └── DataModal.tsx    ← Bullet-list data entry UI
     └── lib/
         ├── parse-bullets.ts ← Parses plain-text input into swimlanes/sublanes
         └── storage.ts       ← localStorage read/write
 ```
 
-> **Note:** The repo is currently mid-restructure. The source still lives in `src/components/` and `src/lib/` — the `src/core/` / `src/app/` split is the target state described in the architecture plan.
 
 ---
 
@@ -80,11 +80,11 @@ Core contains anything that a downstream app should import and build on. The bar
 
 **In scope for core:**
 - `SizingView` component — the squarified treemap visualization, size cycling, color controls, tile layout algorithm
+- `SwimlaneFilter` component — controlled dropdown for selecting which swimlanes are visible
 - `Swimlane` and `TimelineBar` types — minimal, date-free entity types that carry optional metadata
-- `EntityMetadata` type — generic key-value metadata schema for the built-in panel
+- `EntityMetadata` type — generic key-value metadata schema for downstream panels
 - `TShirtSize`, `SIZE_POINTS`, `SIZE_SEQUENCE` — sizing primitives
 - `COLOR_FAMILIES`, shade system — color palette and shade indices
-- Built-in detail panel — Sheet component that renders `entity.metadata` (name, description, MetaFields)
 
 **Out of scope for core (belongs in downstream apps):**
 - Data sourcing — how swimlanes/sublanes are created (bullet text, Slack, CSV, API, etc.)
@@ -138,8 +138,8 @@ type TShirtSize = 'XXS' | 'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL';
 ```typescript
 interface SizingViewProps {
   // Required
-  swimlanes: Swimlane[];
-  bars: TimelineBar[];
+  swimlanes: Swimlane[];           // pass pre-filtered array to show a subset
+  bars: TimelineBar[];             // pass pre-filtered array to match swimlanes
   sizes: Record<string, TShirtSize | null>;
   onSizeChange: (barId: string, size: TShirtSize | null) => void;
   swimlaneFamilyIndices: Record<string, number>;   // which COLOR_FAMILY per swimlane
@@ -150,10 +150,10 @@ interface SizingViewProps {
   // Optional
   onResetSizes?: () => void;                       // shows reset button if provided
 
-  // Panel override (see below)
+  // Panel override (see "Panel system" below)
   onOpenPanel?: (view: { type: 'swimlane' | 'sublane'; id: string }) => void;
-  selectedSwimlaneId?: string;
-  selectedBarId?: string;
+  selectedSwimlaneId?: string;                     // renders selection ring on this swimlane
+  selectedBarId?: string;                          // renders selection ring on this sublane
   nameOverrides?: { sublanes: Record<string, string> };
 }
 ```
@@ -162,28 +162,77 @@ interface SizingViewProps {
 
 ## Panel system: built-in vs override
 
-`SizingView` includes a built-in detail panel (Sheet) that slides open when a user clicks a swimlane label or chooses "See details" on a sublane. It renders the entity's `metadata` field.
+`SizingView` fires a callback when a user clicks a swimlane label or chooses "See details" on a sublane tile. The default behavior and the override pattern differ based on whether `onOpenPanel` is provided:
 
-**Downstream apps can replace this entirely:**
+| `onOpenPanel` provided? | What happens on click |
+|---|---|
+| No | SizingView handles it internally (no panel — the swimlane label is non-interactive) |
+| Yes | SizingView calls the callback; host app owns the panel entirely |
+
+**Downstream apps that want a rich detail panel provide `onOpenPanel`:**
 
 ```typescript
-// Built-in panel — renders entity.metadata automatically
+// No custom panel — swimlane labels are non-interactive
 <SizingView swimlanes={...} bars={...} ... />
 
-// Custom panel — SizingView fires the callback and steps aside
+// Custom panel — SizingView fires callback, host app takes over
 <SizingView
   swimlanes={...}
   bars={...}
   onOpenPanel={({ type, id }) => {
-    // host app opens its own panel here
+    // open your own Sheet, drawer, modal, etc.
   }}
+  selectedSwimlaneId={panelState?.type === 'swimlane' ? panelState.id : undefined}
+  selectedBarId={panelState?.type === 'sublane' ? panelState.id : undefined}
   ...
 />
 ```
 
-If `onOpenPanel` is provided, the built-in panel is suppressed entirely. The host app owns the panel. This is how `koko-planner` integrates — it has a rich Slack-aware panel with dates, milestones, and assignees that it renders outside of `SizingView`.
+`selectedSwimlaneId` and `selectedBarId` highlight the entity that is currently open in the host panel — SizingView renders a visible selection ring around it.
 
-Even when using `onOpenPanel`, you can still populate `entity.metadata` on your swimlane/sublane objects. This sets up a migration path if you later want to move shared fields (e.g. description) back into the built-in panel.
+This is how `koko-planner` integrates: it passes `onOpenPanel` and renders its own rich Slack-aware panel (dates, milestones, assignees, descriptions) outside of `SizingView`.
+
+Even when using the custom panel, you can still populate `entity.metadata` on your swimlane/sublane objects. This creates a migration path if you later want to consolidate shared fields back into a built-in panel.
+
+---
+
+## Swimlane filtering
+
+`SizingView` renders whatever swimlanes and bars it receives — it has no internal concept of filtering. Filtering is always managed outside the component and applied before the data is passed in.
+
+Core exports a `SwimlaneFilter` component for this:
+
+```typescript
+import { SwimlaneFilter } from 'treemapper-core';
+```
+
+```typescript
+// SwimlaneFilter is a controlled component
+<SwimlaneFilter
+  swimlanes={allSwimlanes}
+  selectedIds={selectedSwimlaneIds}
+  onChange={setSelectedSwimlaneIds}
+/>
+```
+
+The host app then filters before passing to `SizingView`:
+
+```typescript
+const hasSwimlaneFilter = selectedSwimlaneIds.length > 0;
+const selectedIdSet = new Set(selectedSwimlaneIds);
+
+const filteredSwimlanes = hasSwimlaneFilter
+  ? allSwimlanes.filter(sl => selectedIdSet.has(sl.id))
+  : allSwimlanes;
+
+const filteredBars = hasSwimlaneFilter
+  ? allBars.filter(b => selectedIdSet.has(b.swimlaneId))
+  : allBars;
+
+<SizingView swimlanes={filteredSwimlanes} bars={filteredBars} ... />
+```
+
+`SwimlaneFilter` renders a dropdown of checkboxes with an "All swimlanes" clear option. Downstream apps can use it as-is or build a richer replacement (koko-planner replaces it with a custom dropdown that also encodes selections into the URL as `?lanes=...`).
 
 ---
 

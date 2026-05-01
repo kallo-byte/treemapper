@@ -1,4 +1,5 @@
 export { SizingView } from './SizingView';
+export { SwimlaneFilter } from './SwimlaneFilter';
 export type {
   Swimlane,
   TimelineBar,
