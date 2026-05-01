@@ -146,7 +146,7 @@ function TileCell({
 }: TileProps) {
   const isUnset = !size;
   const shadeIdx = sublaneShadeIndices[bar.id] ?? DEFAULT_SHADE_INDEX;
-  const labelRef = useRef<HTMLSpanElement>(null);
+  const labelRef = useRef<HTMLDivElement>(null);
 
   const handleMouseEnter = useCallback(() => {
     if (isUnset && labelRef.current) {
