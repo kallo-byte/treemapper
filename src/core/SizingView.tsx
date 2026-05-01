@@ -211,9 +211,9 @@ function TileCell({
         </div>
       )}
       {showSizeOnly && !showFullLabel && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
           {!isUnset && (
-            <span className="text-sm font-bold text-white">{size}</span>
+            <span className="text-sm font-bold text-white leading-none">{size}</span>
           )}
         </div>
       )}
@@ -297,6 +297,7 @@ interface SizingViewProps {
   selectedSwimlaneId?: string;
   selectedBarId?: string;
   nameOverrides?: { sublanes: Record<string, string> };
+  visibleSwimlaneIds?: Set<string>;
 }
 
 export function SizingView({
@@ -364,7 +365,7 @@ export function SizingView({
                     const bar = slBars.find(b => b.id === tile.id)!;
                     const size = sizes[bar.id] as TShirtSize | undefined;
                     const showFullLabel = tile.w >= 72 && tile.h >= 44;
-                    const showSizeOnly = !showFullLabel && (tile.w >= 36 || tile.h >= 36);
+                    const showSizeOnly = !showFullLabel && (tile.w >= 18 || tile.h >= 18);
                     const showMenu = tile.w >= 28 && tile.h >= 28;
                     const displayName = nameOverrides?.sublanes[bar.id] ?? bar.name;
 
