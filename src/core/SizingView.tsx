@@ -185,21 +185,28 @@ function TileCell({
       }}
     >
       {showFullLabel && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5 px-1 overflow-hidden pointer-events-none">
-          <span
-            ref={labelRef}
-            className="text-[10px] leading-tight text-white/90 font-medium text-center line-clamp-2 w-full rounded-sm px-1 py-0.5 transition-colors duration-200"
-          >
-            {displayName}
-          </span>
+        <div className="absolute inset-0 flex flex-col items-center justify-center px-1 overflow-hidden pointer-events-none">
           {isUnset ? (
-            <span className="text-[9px] font-medium leading-tight text-white/40 text-center">
-              Click to size
-            </span>
+            <div
+              ref={labelRef}
+              className="flex flex-col items-center gap-0.5 rounded-sm px-1 py-1 transition-colors duration-200"
+            >
+              <span className="text-[10px] leading-tight text-white/90 font-medium text-center line-clamp-2 w-full">
+                {displayName}
+              </span>
+              <span className="text-[9px] font-medium leading-tight text-white/50 text-center">
+                Click to change size
+              </span>
+            </div>
           ) : (
-            <span className="text-sm font-bold leading-none text-white">
-              {size}
-            </span>
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-[10px] leading-tight text-white/90 font-medium text-center line-clamp-2 w-full px-1">
+                {displayName}
+              </span>
+              <span className="text-sm font-bold leading-none text-white">
+                {size}
+              </span>
+            </div>
           )}
         </div>
       )}
