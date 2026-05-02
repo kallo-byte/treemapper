@@ -148,6 +148,9 @@ function TileCell({
   const shadeIdx = sublaneShadeIndices[bar.id] ?? DEFAULT_SHADE_INDEX;
   const labelRef = useRef<HTMLDivElement>(null);
 
+  const padX = Math.max(4, Math.round(tile.w * 0.04));
+  const padY = Math.max(4, Math.round(tile.h * 0.04));
+
   const handleMouseEnter = useCallback(() => {
     if (isUnset && labelRef.current) {
       labelRef.current.style.backgroundColor = cellColor;
@@ -185,25 +188,28 @@ function TileCell({
       }}
     >
       {showFullLabel && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center px-1 overflow-hidden pointer-events-none">
+        <div
+          className="absolute inset-0 flex flex-col items-center justify-center overflow-hidden pointer-events-none"
+          style={{ padding: `${padY}px ${padX}px` }}
+        >
           {isUnset ? (
             <div
               ref={labelRef}
-              className="flex flex-col items-center gap-0.5 rounded-sm px-1 py-1 transition-colors duration-200"
+              className="flex flex-col items-center gap-0.5 rounded-sm px-1 py-0.5 transition-colors duration-200 w-full"
             >
-              <span className="text-[12px] leading-tight text-white/90 font-medium text-center line-clamp-2 w-full">
+              <span className="text-[12px] leading-tight text-white/90 font-medium text-center w-full">
                 {displayName}
               </span>
-              <span className="text-[11px] font-medium leading-tight text-white/50 text-center">
-                Click to change size
+              <span className="text-[9px] font-medium leading-tight text-white/50 text-center">
+                Click to size
               </span>
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-0.5">
-              <span className="text-[12px] leading-tight text-white/90 font-medium text-center line-clamp-2 w-full px-1">
+            <div className="flex flex-col items-center gap-1 w-full">
+              <span className="text-[12px] leading-tight text-white/90 font-medium text-center w-full">
                 {displayName}
               </span>
-              <span className="text-base font-bold leading-none text-white">
+              <span className="text-[9px] font-bold leading-none text-white/80">
                 {size}
               </span>
             </div>
@@ -213,7 +219,7 @@ function TileCell({
       {showSizeOnly && !showFullLabel && (
         <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
           {!isUnset && (
-            <span className="text-sm font-bold text-white leading-none">{size}</span>
+            <span className="text-[9px] font-bold text-white leading-none">{size}</span>
           )}
         </div>
       )}
